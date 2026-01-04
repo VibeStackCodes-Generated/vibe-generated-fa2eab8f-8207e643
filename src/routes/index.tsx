@@ -1,5 +1,31 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import App from '@/App'
+import { HomePage } from '@/pages/home'
+
+/**
+ * Lazy-loaded page components for code splitting
+ * These pages are loaded only when needed to reduce initial bundle size
+ */
+const AboutPage = lazy(() => import('@/pages/about').then(m => ({ default: m.AboutPage })))
+const ContactPage = lazy(() => import('@/pages/contact').then(m => ({ default: m.ContactPage })))
+const NotFoundPage = lazy(() =>
+  import('@/pages/not-found').then(m => ({ default: m.NotFoundPage }))
+)
+
+/**
+ * Fallback component while lazy-loaded pages are loading
+ */
+function LoadingFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="space-y-4 text-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#5200ff] dark:border-gray-600"></div>
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      </div>
+    </div>
+  )
+}
 
 /**
  * Get basename dynamically from window location or environment
@@ -39,21 +65,60 @@ function getBasename(): string {
 }
 
 /**
- * Application routes
- * Add new routes here for code splitting
+ * Application routes configuration
+ *
+ * Features:
+ * - Client-side SPA routing with React Router
+ * - Lazy-loaded pages for code splitting
+ * - Error boundary integration
+ * - 404 Not Found handling
+ * - Nested routes support
  */
 export const router = createBrowserRouter(
   [
     {
       path: '/',
       element: <App />,
+      errorElement: (
+        <Suspense fallback={<LoadingFallback />}>
+          <NotFoundPage />
+        </Suspense>
+      ),
       children: [
         {
           index: true,
+          element: <HomePage />,
+        },
+        {
+          path: 'about',
           element: (
-            <div className="flex min-h-screen items-center justify-center">
-              <p className="text-muted-foreground">Start building your app</p>
-            </div>
+            <Suspense fallback={<LoadingFallback />}>
+              <AboutPage />
+            </Suspense>
+          ),
+        },
+        {
+          path: 'contact',
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <ContactPage />
+            </Suspense>
+          ),
+        },
+        {
+          path: 'not-found',
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <NotFoundPage />
+            </Suspense>
+          ),
+        },
+        {
+          path: '*',
+          element: (
+            <Suspense fallback={<LoadingFallback />}>
+              <NotFoundPage />
+            </Suspense>
           ),
         },
       ],
